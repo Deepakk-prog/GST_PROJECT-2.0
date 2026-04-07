@@ -1,0 +1,108 @@
+:root {
+    --bg-color: #eef2f7;
+    --card-bg: #ffffff;
+    --text-main: #1a73e8;
+    --text-sub: #5f6368;
+    --input-border: #dadce0;
+    --mode-bg: #f1f3f4;
+    --label-color: #3c4043;
+}
+
+[data-theme="dark"] {
+    --bg-color: #121212;
+    --card-bg: #1e1e1e;
+    --text-main: #8ab4f8;
+    --text-sub: #bdc1c6;
+    --input-border: #3c4043;
+    --mode-bg: #2d2d2d;
+    --label-color: #e8eaed;
+}
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: var(--bg-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    transition: background 0.3s ease;
+}
+
+.card {
+    background: var(--card-bg);
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    width: 450px;
+    text-align: center;
+    transition: background 0.3s ease;
+}
+
+h1 { color: var(--text-main); margin-bottom: 20px; }
+
+.theme-toggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 10px;
+    border-radius: 50%;
+    border: none;
+    background: var(--card-bg);
+    cursor: pointer;
+    font-size: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.mode-selector {
+    display: flex;
+    background: var(--mode-bg);
+    padding: 5px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.mode-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text-sub);
+    border-radius: 6px;
+}
+
+.mode-btn.active {
+    background: var(--card-bg);
+    color: var(--text-main);
+}
+
+.subtitle { font-size: 14px; color: var(--text-sub); margin-bottom: 20px; }
+.upload-group { text-align: left; margin-bottom: 15px; }
+label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: var(--label-color); }
+
+input[type="file"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--input-border);
+    border-radius: 6px;
+    background: var(--card-bg);
+    color: var(--text-sub);
+}
+
+.primary-btn {
+    width: 100%;
+    padding: 12px;
+    background: #1a73e8;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#status { margin-top: 15px; font-size: 14px; font-weight: bold; }
+.success { color: #1e8e3e; }
+.error { color: #d93025; }

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Meesho GST Tool - Multi Mode</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  </head>
+  <body>
+    <button id="themeToggle" class="theme-toggle" onclick="toggleTheme()">
+      🌙
+    </button>
+
+    <div class="app">
+      <div class="card">
+        <h1>GST JSON Generator</h1>
+
+        <div class="mode-selector">
+          <button
+            id="btnMonthly"
+            class="mode-btn active"
+            onclick="switchMode('monthly')"
+          >
+            Monthly
+          </button>
+          <button
+            id="btnQuarterly"
+            class="mode-btn"
+            onclick="switchMode('quarterly')"
+          >
+            Quarterly
+          </button>
+        </div>
+
+        <p id="modeDesc" class="subtitle">
+          Processing for: <strong>Monthly Return</strong>
+        </p>
+
+        <div class="upload-group">
+          <label id="salesLabel">Upload Sales File(s)</label>
+          <input type="file" id="salesInput" accept=".xlsx, .xls, .csv" />
+        </div>
+
+        <div class="upload-group">
+          <label id="returnLabel">Upload Sales Return File(s)</label>
+          <input type="file" id="returnInput" accept=".xlsx, .xls, .csv" />
+        </div>
+
+        <button
+          id="mainActionBtn"
+          class="primary-btn"
+          onclick="handleProcessing()"
+        >
+          Generate JSON ✅
+        </button>
+
+        <div id="status"></div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
