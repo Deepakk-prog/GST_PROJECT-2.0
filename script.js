@@ -8,7 +8,7 @@ function toggleTheme() {
     newTheme === "dark" ? "☀️" : "🌙";
 }
 
-// Load saved theme on startup
+// Load saved theme
 const savedTheme = localStorage.getItem("theme") || "light";
 document.documentElement.setAttribute("data-theme", savedTheme);
 window.onload = () => {
@@ -114,42 +114,59 @@ async function handleProcessing() {
     let allSales = [];
     let allReturns = [];
 
-    for (let file of sFiles) {
-      allSales = allSales.concat(await readExcel(file));
-    }
-    for (let file of rFiles) {
+    for (let file of sFiles) allSales = allSales.concat(await readExcel(file));
+    for (let file of rFiles)
       allReturns = allReturns.concat(await readExcel(file));
-    }
 
     const firstRow = allSales[0];
-    const gstin = firstRow.gstin;
+    const gstin = String(firstRow.gstin).toUpperCase();
+
+    // GSTIN Validation
+    const gstinRegex = /^[0-9]{2}[A-Z0-9]{13}$/;
+    if (!gstinRegex.test(gstin)) throw new Error("Invalid GSTIN");
+
     const HOME_STATE = gstin.substring(0, 2);
 
+    // FP Calculation
     let fp = "";
     if (currentMode === "monthly") {
       let mm = String(firstRow.month_number).padStart(2, "0");
-      fp = mm + firstRow.financial_year;
+      fp = mm + String(firstRow.financial_year).slice(-4);
     } else {
       let maxM = 0;
       allSales.forEach((r) => {
-        if (parseInt(r.month_number) > maxM) maxM = parseInt(r.month_number);
+        let m = parseInt(r.month_number);
+        if (m > maxM) maxM = m;
       });
-      fp = String(maxM).padStart(2, "0") + firstRow.financial_year;
+      fp =
+        String(maxM).padStart(2, "0") +
+        String(firstRow.financial_year).slice(-4);
     }
 
     let summary = {};
-    const process = (data, isRet) => {
+
+    const process = (data, isReturn) => {
       data.forEach((row) => {
-        let pos =
-          STATE_CODES[String(row.end_customer_state_new).toLowerCase().trim()];
-        let rate = parseFloat(row.gst_rate);
-        if (!pos || !rate) return;
+        let stateName = String(row.end_customer_state_new || "")
+          .toLowerCase()
+          .trim();
+        let pos = STATE_CODES[stateName];
+
+        if (!pos) {
+          console.warn("Invalid state:", stateName);
+          return;
+        }
+
+        let taxable = parseFloat(row.total_taxable_sale_value) || 0;
+        let rate = parseFloat(row.gst_rate) || 0;
+
+        if (!rate) return;
+
         let key = `${pos}_${rate}`;
-        if (!summary[key]) summary[key] = { pos, rate, taxable: 0, tax: 0 };
-        let m = isRet ? -1 : 1;
-        summary[key].taxable +=
-          (parseFloat(row.total_taxable_sale_value) || 0) * m;
-        summary[key].tax += (parseFloat(row.tax_amount) || 0) * m;
+        if (!summary[key]) summary[key] = { pos, rate, taxable: 0 };
+
+        let multiplier = isReturn ? -1 : 1;
+        summary[key].taxable += taxable * multiplier;
       });
     };
 
@@ -157,24 +174,45 @@ async function handleProcessing() {
     process(allReturns, true);
 
     const b2cs = Object.values(summary)
-      .filter((i) => Math.abs(i.taxable) > 1)
+      .filter((i) => i.taxable !== 0)
       .map((i) => {
         let isIntra = i.pos === HOME_STATE;
-        return {
-          sply_ty: isIntra ? "INTRA" : "INTER",
-          pos: i.pos,
-          rt: i.rate,
-          txval: Math.round(i.taxable),
-          iamt: isIntra ? 0 : Math.round(i.tax),
-          camt: isIntra ? Math.round(i.tax / 2) : 0,
-          samt: isIntra ? Math.round(i.tax / 2) : 0,
-        };
+        let tax = (i.taxable * i.rate) / 100;
+
+        if (isIntra) {
+          return {
+            sply_ty: "INTRA",
+            pos: i.pos,
+            rt: i.rate,
+            typ: "OE",
+            txval: Number(i.taxable.toFixed(2)),
+            camt: Number((tax / 2).toFixed(2)),
+            samt: Number((tax / 2).toFixed(2)),
+          };
+        } else {
+          return {
+            sply_ty: "INTER",
+            pos: i.pos,
+            rt: i.rate,
+            typ: "OE",
+            txval: Number(i.taxable.toFixed(2)),
+            iamt: Number(tax.toFixed(2)),
+          };
+        }
       });
 
-    const finalJson = { gstin, fp, b2cs };
+    const finalJson = {
+      gstin,
+      fp,
+      version: "GST3.2.1",
+      hash: "hash",
+      b2cs,
+    };
+
     const blob = new Blob([JSON.stringify(finalJson, null, 2)], {
       type: "application/json",
     });
+
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = `GSTR1_${currentMode.toUpperCase()}_${gstin}_${fp}.json`;
